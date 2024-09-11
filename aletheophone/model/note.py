@@ -26,13 +26,16 @@ class Note(DataModel):
         """
 
     @classmethod
-    async def create(self, text: str):
-        keys = self.sql_keys({"id", "created"})
-        values = self.sql_keys({"id", "created"})
+    async def create(cls, text: str):
+        keys = cls.sql_keys({"id", "created"})
+        values = cls.sql_values({"id", "created"})
         encoded = await encoder.encode([text])
         row = (text, encoded[0].astype(float32))
 
-        return (f"INSERT INTO note ({keys}) VALUES ({values})", row)
+        return (
+            f"INSERT INTO note ({keys}) VALUES ({values}) RETURNING {cls.sql_keys()}",
+            row,
+        )
 
     def delete(self):
         return (f"DELETE FROM note WHERE id = ?", (self.id,))

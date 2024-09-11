@@ -19,8 +19,9 @@ class DataModel(BaseModel):
 
         return ", ".join(keys)
 
-    def sql_values(self, filter: set = set()):
-        keys = [k for k in self.keys() if k not in filter]
+    @classmethod
+    def sql_values(cls, filter: set = set()):
+        keys = [k for k in cls.keys() if k not in filter]
 
         return ",".join(["?" for _ in keys])
 
