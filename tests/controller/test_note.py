@@ -6,8 +6,9 @@ client = TestClient(app)
 
 
 class TestNoteController:
-    @mark.asyncio
     def test_crud(self):
-        response = client.post("/note", json={"text": "Hello world"})
+        text = "Hello world!"
+        response = client.post("/note", json={"text": text})
 
-        assert response == 200
+        assert response.status_code == 200
+        assert response.json()["text"] == text
