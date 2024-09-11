@@ -7,11 +7,6 @@ from uvicorn import run
 from .controller.note import *
 
 
-async def start():
+if __name__ == "__main__":
     config = get_config()
     run(app, host=config.http_host, port=config.http_port)
-
-
-if __name__ == "__main__":
-    loop = get_event_loop()
-    loop.run_until_complete(start())
