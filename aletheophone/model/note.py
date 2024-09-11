@@ -15,6 +15,14 @@ class Note(DataModel):
     vector: list[float]
     created: int
 
+    def model_dump_json(self, **kwargs):
+        kwargs.setdefault("exclude", {"vector"})
+        return super().model_dump_json(**kwargs)
+
+    def json(self, **kwargs):
+        kwargs.setdefault("exclude", {"vector"})
+        return super().json(**kwargs)
+
     def schema(self):
         return """
             CREATE TABLE IF NOT EXISTS note (

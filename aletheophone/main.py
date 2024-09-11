@@ -1,10 +1,6 @@
-from asyncio import get_event_loop
-from .deps import app
+from .app import app
 from .config import get_config
 from uvicorn import run
-
-
-from .controller.note import *
 
 
 if __name__ == "__main__":

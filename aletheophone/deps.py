@@ -5,8 +5,6 @@ from .config import get_config, Config
 from .gateway.data import DataGateway
 from .model.note import Note
 
-app = FastAPI()
-
 MODELS = [Note]
 
 

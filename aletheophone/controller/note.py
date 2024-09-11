@@ -1,27 +1,29 @@
 from datetime import timedelta
 from typing import Literal
-from fastapi import Depends, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from ..deps import app, db
+from ..deps import db
 from ..gateway.data import DataGateway
 from ..model.note import Note
+
+router = APIRouter()
 
 
 class CreateNoteRequest(BaseModel):
     text: str
 
 
-@app.post("/note")
+@router.post("/note")
 async def create_note(request: CreateNoteRequest, db: DataGateway = Depends(db)):
     return await db.fetch_one(Note, *(await Note.create(request.text)))
 
 
-@app.get("/note/{id}")
+@router.get("/note/{id}")
 async def get_note(id: int, db: DataGateway = Depends(db)):
     return await db.fetch_one(Note.get(), (id,))
 
 
-@app.delete("/note/{id}")
+@router.delete("/note/{id}")
 async def delete_note(id: int, db: DataGateway = Depends(db)):
     note = await db.fetch_one(Note.get(), (id,))
 
@@ -31,7 +33,7 @@ async def delete_note(id: int, db: DataGateway = Depends(db)):
     await db.execute(*note.delete())
 
 
-@app.get("/notes")
+@router.get("/notes")
 async def get_notes(
     order_by: Literal["created", "vector"] = Query("created"),
     order: Literal["ASC", "DESC"] = Query("ASC"),
