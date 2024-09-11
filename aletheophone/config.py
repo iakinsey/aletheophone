@@ -8,6 +8,8 @@ data_path = join(getcwd(), "data")
 class Config(BaseModel):
     storage_path: str = data_path
     db_path: str = join(data_path, "mg.db")
+    http_host: str = "0.0.0.0"
+    http_port: int = 8000
 
 
 def get_config() -> Config:

@@ -1,35 +1,17 @@
-from asyncio import run, Future
-from os import remove
-from tempfile import NamedTemporaryFile
-
-from aiofiles import open as aopen
-from websockets import serve, ConnectionClosed
-import whisper
+from asyncio import get_event_loop
+from .deps import app
+from .config import get_config
+from uvicorn import run
 
 
-model = whisper.load_model("medium.en")
+from .controller.note import *
 
 
-async def audio_handler(websocket, path):
-    path = NamedTemporaryFile(delete=False).name
-
-    try:
-        async with aopen(path, mode="wb") as f:
-            while 1:
-                await f.write(await websocket.recv())
-    except ConnectionClosed:
-        out = model.transcribe(path, language="english")
-        print(out["text"])
-    finally:
-        remove(path)
-
-
-async def main():
-    # Start the WebSocket server
-    async with serve(audio_handler, "localhost", 8765):
-        print("Server started, waiting for connections...")
-        await Future()  # Run forever
+async def start():
+    config = get_config()
+    run(app, host=config.http_host, port=config.http_port)
 
 
 if __name__ == "__main__":
-    run(main())
+    loop = get_event_loop()
+    loop.run_until_complete(start())
