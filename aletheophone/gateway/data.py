@@ -13,7 +13,7 @@ class DataGateway(ABC):
         self.db = db
 
     async def declare(self, model: DataModel):
-        for q in model.split(";"):
+        for q in model.schema().split(";"):
             if not q:
                 continue
 

@@ -2,7 +2,8 @@ from pydantic import BaseModel
 
 
 class DataModel(BaseModel):
-    def schema(self):
+    @classmethod
+    def schema(cls):
         raise NotImplementedError
 
     @classmethod

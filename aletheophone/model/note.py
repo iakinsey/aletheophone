@@ -1,8 +1,9 @@
 from datetime import timedelta
 from time import time
+from typing import Any
 from numpy import float32
-from sqlite_vec import serialize_float32
 from .base import DataModel
+from ..util.data import deserialize_float32
 from ..util.encoder import Encoder
 
 
@@ -12,24 +13,21 @@ encoder = Encoder()
 class Note(DataModel):
     id: int
     text: str
-    vector: list[float]
+    vector: Any
     created: int
 
-    def model_dump_json(self, **kwargs):
-        kwargs.setdefault("exclude", {"vector"})
-        return super().model_dump_json(**kwargs)
+    def model_dump(self, **kwargs):
+        kwargs["exclude"] = {"vector"}
+        return super().model_dump(**kwargs)
 
-    def json(self, **kwargs):
-        kwargs.setdefault("exclude", {"vector"})
-        return super().json(**kwargs)
-
-    def schema(self):
+    @classmethod
+    def schema(cls):
         return """
             CREATE TABLE IF NOT EXISTS note (
-                id TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 text TEXT NOT NULL,
                 vector FLOAT[1024] NOT NULL,
-                created INT NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
+                created INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
             );
         """
 
@@ -66,3 +64,10 @@ class Note(DataModel):
             OFFSET {offset}
             ORDER BY {order_by} {order}
         """
+
+    @classmethod
+    def from_row(cls, row: list):
+        params = dict(zip(cls.keys(), row))
+        params["vector"] = deserialize_float32(params["vector"])
+
+        return cls(**params)
