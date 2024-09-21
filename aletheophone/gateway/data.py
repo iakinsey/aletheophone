@@ -29,9 +29,14 @@ class DataGateway(ABC):
 
         return results
 
-    async def fetch_one(self, Model: T, query: str, args: tuple = ()) -> Optional[T]:
+    async def fetch_one(
+        self, Model: T, query: str, args: tuple = (), commit=False
+    ) -> Optional[T]:
         async with self.db.execute(query, args) as cursor:
             row = await cursor.fetchone()
+
+        if commit:
+            await self.db.commit()
 
         return Model.from_row(row)
 

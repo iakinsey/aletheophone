@@ -15,17 +15,17 @@ class CreateNoteRequest(BaseModel):
 
 @router.post("/note")
 async def create_note(request: CreateNoteRequest, db: DataGateway = Depends(db)):
-    return await db.fetch_one(Note, *(await Note.create(request.text)))
+    return await db.fetch_one(Note, *(await Note.create(request.text)), commit=True)
 
 
 @router.get("/note/{id}")
 async def get_note(id: int, db: DataGateway = Depends(db)):
-    return await db.fetch_one(Note.get(), (id,))
+    return await db.fetch_one(Note, *Note.get(id))
 
 
 @router.delete("/note/{id}")
 async def delete_note(id: int, db: DataGateway = Depends(db)):
-    note = await db.fetch_one(Note.get(), (id,))
+    note = await db.fetch_one(*Note.get(id))
 
     if not note:
         raise KeyError(id)
