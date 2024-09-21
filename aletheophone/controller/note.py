@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Literal
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel
 from ..deps import db
 from ..gateway.data import DataGateway
@@ -20,15 +20,20 @@ async def create_note(request: CreateNoteRequest, db: DataGateway = Depends(db))
 
 @router.get("/note/{id}")
 async def get_note(id: int, db: DataGateway = Depends(db)):
-    return await db.fetch_one(Note, *Note.get(id))
+    note = await db.fetch_one(Note, *Note.get(id))
+
+    if not note:
+        raise HTTPException(status_code=404)
+
+    return note
 
 
 @router.delete("/note/{id}")
 async def delete_note(id: int, db: DataGateway = Depends(db)):
-    note = await db.fetch_one(*Note.get(id))
+    note = await db.fetch_one(Note, *Note.get(id))
 
     if not note:
-        raise KeyError(id)
+        raise HTTPException(status_code=404)
 
     await db.execute(*note.delete())
 
@@ -41,5 +46,8 @@ async def get_notes(
     offset: int = Query(0, ge=0),
     window: timedelta = Query(timedelta(days=30)),
     db: DataGateway = Depends(db),
-) -> list[Note]:
-    return await db.fetch(Note, Note.list(order_by, order, limit, offset, window))
+):
+    return [
+        n.model_dump()
+        for n in await db.fetch(Note, Note.list(order_by, order, limit, offset, window))
+    ]

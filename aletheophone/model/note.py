@@ -60,13 +60,16 @@ class Note(DataModel):
             SELECT {cls.sql_keys()} FROM note
             WHERE
                 created >= {time_window}
+            ORDER BY {order_by} {order}
             LIMIT {limit}
             OFFSET {offset}
-            ORDER BY {order_by} {order}
         """
 
     @classmethod
     def from_row(cls, row: list):
+        if not row:
+            return None
+
         params = dict(zip(cls.keys(), row))
         params["vector"] = deserialize_float32(params["vector"])
 
