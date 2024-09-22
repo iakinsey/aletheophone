@@ -1,35 +1,57 @@
-from asyncio import run, Future
 from os import remove
-from tempfile import NamedTemporaryFile
 
 from aiofiles import open as aopen
-from websockets import serve, ConnectionClosed
-import whisper
+from aiofiles.tempfile import NamedTemporaryFile
+from fastapi import Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter
+from whisper import load_model
+
+from ..deps import db
+from ..gateway.data import DataGateway
+from ..model.note import Note
 
 
-model = whisper.load_model("medium.en")
+model = load_model("medium.en")
+router = APIRouter()
+term_char = "\ue784"
 
 
-async def audio_handler(websocket, path):
-    path = NamedTemporaryFile(delete=False).name
+# TODO add a session ID so that streams can be continued in the event they break
+@router.websocket("/stream")
+async def voice_stream_processor(websocket: WebSocket, db: DataGateway = Depends(db)):
+    await websocket.accept()
 
-    try:
-        async with aopen(path, mode="wb") as f:
-            while 1:
-                await f.write(await websocket.recv())
-    except ConnectionClosed:
-        out = model.transcribe(path, language="english")
-        print(out["text"])
-    finally:
-        remove(path)
+    async with NamedTemporaryFile(mode="w+b", delete=False) as f:
+        window = bytearray()
 
+        try:
+            while True:
+                data = await websocket.receive_bytes()
 
-async def main():
-    # Start the WebSocket server
-    async with serve(audio_handler, "localhost", 8765):
-        print("Server started, waiting for connections...")
-        await Future()  # Run forever
+                try:
+                    await f.write(data)
+                except Exception as exc:
+                    print(data)
 
+                for byte in data:
+                    window.append(byte)
 
-if __name__ == "__main__":
-    run(main())
+                    if len(window) > 2:
+                        window.pop(0)
+
+                    if window == b"\x9E\x84":
+                        await f.seek(-2, 2)
+                        await f.truncate()
+
+                        text = model.transcribe(f.name, language="english")[
+                            "text"
+                        ].strip()
+                        params = await Note.create(text)
+                        note = await db.fetch_one(Note, *params, commit=True)
+
+                        await websocket.send_json(note.model_dump())
+                        return
+        except WebSocketDisconnect:
+            pass
+        except Exception as e:
+            print(e)

@@ -1,9 +1,7 @@
 from asyncio import get_running_loop
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Tuple
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
-from ..log import log
 
 
 class Encoder:
