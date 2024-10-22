@@ -1,5 +1,3 @@
-from os import remove
-
 from aiofiles import open as aopen
 from aiofiles.tempfile import NamedTemporaryFile
 from fastapi import Depends, WebSocket, WebSocketDisconnect
@@ -53,5 +51,3 @@ async def voice_stream_processor(websocket: WebSocket, db: DataGateway = Depends
                         return
         except WebSocketDisconnect:
             pass
-        except Exception as e:
-            print(e)

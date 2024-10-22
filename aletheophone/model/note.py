@@ -1,6 +1,6 @@
 from datetime import timedelta
 from time import time
-from typing import Any
+from typing import Any, Optional
 from numpy import float32
 from .base import DataModel
 from ..util.data import deserialize_float32
@@ -13,7 +13,7 @@ encoder = Encoder()
 class Note(DataModel):
     id: int
     text: str
-    vector: Any
+    vector: Optional[Any] = None
     created: int
 
     def model_dump(self, **kwargs):
@@ -51,16 +51,10 @@ class Note(DataModel):
         return (f"SELECT {cls.sql_keys()} FROM note WHERE id = ? LIMIT 1", (id,))
 
     @classmethod
-    def list(
-        cls, order_by: str, order: str, limit: int, offset: int, window: timedelta
-    ):
-
-        time_window = int(time() - window.total_seconds())
+    def list(cls, limit: int, offset: int):
         return f"""
             SELECT {cls.sql_keys()} FROM note
-            WHERE
-                created >= {time_window}
-            ORDER BY {order_by} {order}
+            ORDER BY created DESC
             LIMIT {limit}
             OFFSET {offset}
         """
@@ -74,3 +68,10 @@ class Note(DataModel):
         params["vector"] = deserialize_float32(params["vector"])
 
         return cls(**params)
+
+    @classmethod
+    def get_similar(cls, id: int, n: int = 10):
+        return f"""
+            SELECT {cls.sql_keys()} FROM note
+            LIMIT 10
+        """

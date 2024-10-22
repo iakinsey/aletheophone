@@ -1,0 +1,44 @@
+import React from 'react';
+import { FormControl, FormLabel, Select, Button, VStack, HStack } from '@chakra-ui/react';
+import { useState } from 'react';
+import SearchNote from '../models/search_note';
+import { useNavigate } from 'react-router-dom';
+
+interface SearchPanelProps {
+    searchNote: SearchNote,
+}
+
+const SearchPanel: React.FC<SearchPanelProps> = ({ searchNote }) => {
+    const navigate = useNavigate()
+
+    const doSearch = () => {
+        const searchParams = new SearchNote(searchNote.limit, searchNote.offset);
+
+        navigate(searchParams.toQueryUrl());
+    };
+
+    return (
+        <VStack>
+            <FormControl>
+                <FormLabel>Order</FormLabel>
+                <Select value={order} onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}>
+                    <option value="ASC">Ascending</option>
+                    <option value="DESC">Descending</option>
+                </Select>
+            </FormControl>
+ 
+
+            <FormControl>
+                <FormLabel>Order By</FormLabel>
+                <Select value={orderBy} onChange={(e) => setOrderBy(e.target.value as "created" | "vector")}>
+                    <option value="created">Created</option>
+                    <option value="vector">Vector</option>
+                </Select>
+            </FormControl>
+
+            <Button onClick={doSearch}>Search</Button>
+        </VStack>
+    );
+}
+
+export default SearchPanel;
